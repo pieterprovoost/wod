@@ -1,6 +1,7 @@
 package be.pieterprovoost.wod;
 
 import be.pieterprovoost.wod.model.*;
+import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -13,6 +14,8 @@ import java.util.List;
  * Parser for ASCII records.
  */
 public class Parser {
+
+    final static Logger logger = Logger.getLogger(Parser.class);
 
     private Reader reader;
 
@@ -36,6 +39,7 @@ public class Parser {
         cast.setCharacterEntries(parseCharacterEntries());
         cast.setSecondaryHeader(parseSecondaryHeader());
         cast.setBiologicalHeader(parseBiologicalHeader());
+        cast.setTaxonData(parseTaxonData());
         return cast;
     }
 
@@ -46,6 +50,7 @@ public class Parser {
      */
     private SecondaryHeader parseSecondaryHeader() {
 
+        logger.debug("Secondary header");
         SecondaryHeader secondaryHeader = new SecondaryHeader();
 
         int f1 = readInt(1);
@@ -55,6 +60,8 @@ public class Parser {
         }
 
         int f2 = readInt(f1);
+        logger.debug("Bytes in secondary header: " + f2);
+
         int f3 = readInt(1);
         Integer entryNumber = readInt(f3);
 
@@ -77,6 +84,7 @@ public class Parser {
      */
     private BiologicalHeader parseBiologicalHeader() {
 
+        logger.debug("Biological header");
         BiologicalHeader biologicalHeader = new BiologicalHeader();
 
         int f1 = readInt(1);
@@ -101,6 +109,46 @@ public class Parser {
 
     }
 
+    private TaxonData parseTaxonData() {
+
+        logger.debug("Taxon data");
+        TaxonData taxonData = new TaxonData();
+
+        int f1 = readInt(1);
+        if (f1 == 0) {
+            return taxonData;
+        }
+        int taxaSetNumber = readInt(f1);
+
+        for (int t = 0; t < taxaSetNumber; t++) {
+
+            TaxaSet taxaSet = new TaxaSet();
+
+            int f3 = readInt(1);
+            int taxaSetEntryNumber = readInt(f3);
+
+            for (int e = 0; e < taxaSetEntryNumber; e++) {
+
+                TaxaSetEntry taxaSetEntry = new TaxaSetEntry();
+
+                int f5 = readInt(1);
+                taxaSetEntry.setCode(readInt(f5));
+                taxaSetEntry.setValue(readDouble());
+                taxaSetEntry.setQualityControl(readInt(1));
+                taxaSetEntry.setOriginator(readInt(1));
+
+                taxaSet.getEntries().add(taxaSetEntry);
+
+            }
+
+            taxonData.getTaxaSets().add(taxaSet);
+
+        }
+
+
+        return taxonData;
+    }
+
     /**
      * Parses character entries.
      *
@@ -108,11 +156,20 @@ public class Parser {
      */
     private List<CharacterEntry> parseCharacterEntries() {
 
+        logger.debug("Character entries");
         List<CharacterEntry> entries = new ArrayList<CharacterEntry>();
 
         int f1 = readInt(1);
+
+        if (f1 == 0) {
+            return entries;
+        }
+
         int f2 = readInt(f1);
+        logger.debug("Total bytes character data: " + f2);
+
         Integer entryNumber = readInt(1);
+        logger.debug("Character data entries: " + entryNumber);
 
         for (int e = 0; e < entryNumber; e++) {
 
@@ -126,7 +183,7 @@ public class Parser {
 
                 // data
 
-                int f5 = readInt(1);
+                int f5 = readInt(2);
                 characterEntry.setData(readString(f5));
 
             } else if (characterEntry.getDataType() == 3) {
@@ -172,6 +229,7 @@ public class Parser {
      */
     private PrimaryHeader parsePrimaryHeader() {
 
+        logger.debug("Primary header");
         PrimaryHeader primaryHeader = new PrimaryHeader();
 
         // version
@@ -182,6 +240,7 @@ public class Parser {
 
         int f2 = readInt(1);
         int profileBytes = readInt(f2);
+        logger.debug("Bytes in profile: " + profileBytes);
 
         // cast number
 
@@ -201,7 +260,7 @@ public class Parser {
 
         primaryHeader.setYear(readInt(4));
         primaryHeader.setMonth(readInt(2));
-        primaryHeader.setMonth(readInt(2));
+        primaryHeader.setDay(readInt(2));
 
         // time
 
@@ -216,6 +275,7 @@ public class Parser {
 
         int f15 = readInt(1);
         primaryHeader.setLevelNumber(readInt(f15));
+        logger.debug("Number of levels: " + primaryHeader.getLevelNumber());
 
         // profile type
 
@@ -224,11 +284,13 @@ public class Parser {
         // number of variables
 
         primaryHeader.setVariableNumber(readInt(2));
+        logger.debug("Number of variables: " + primaryHeader.getVariableNumber());
 
         // variables
 
         for (int v = 0; v < primaryHeader.getVariableNumber(); v++) {
 
+            logger.debug("Variable");
             Variable variable = new Variable();
 
             // variable code
@@ -244,11 +306,13 @@ public class Parser {
 
             int f22 = readInt(1);
             variable.setMetadataNumber(readInt(f22));
+            logger.debug("Number of metadata: " + variable.getMetadataNumber());
 
             // metadata
 
             for (int m = 0; m < variable.getMetadataNumber(); m++) {
 
+                logger.debug("Metadata");
                 Metadata metadata = new Metadata();
 
                 // code
@@ -308,11 +372,11 @@ public class Parser {
                     n = reader.read();
                 }
                 result[i] = (char) n;
-                System.out.println("n: " + n + ", result: " + result[i]);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        logger.debug("  Bytes read: " + new String(result));
         return result;
     }
 

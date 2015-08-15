@@ -9,6 +9,17 @@ import java.util.List;
 public class Cast {
 
     private PrimaryHeader primaryHeader;
+    private SecondaryHeader secondaryHeader;
+    private BiologicalHeader biologicalHeader;
+    private TaxonData taxonData;
+
+    public TaxonData getTaxonData() {
+        return taxonData;
+    }
+
+    public void setTaxonData(TaxonData taxonData) {
+        this.taxonData = taxonData;
+    }
 
     public BiologicalHeader getBiologicalHeader() {
         return biologicalHeader;
@@ -17,9 +28,6 @@ public class Cast {
     public void setBiologicalHeader(BiologicalHeader biologicalHeader) {
         this.biologicalHeader = biologicalHeader;
     }
-
-    private SecondaryHeader secondaryHeader;
-    private BiologicalHeader biologicalHeader;
 
     public SecondaryHeader getSecondaryHeader() {
         return secondaryHeader;
