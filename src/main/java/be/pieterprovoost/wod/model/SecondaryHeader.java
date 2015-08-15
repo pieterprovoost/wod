@@ -1,23 +1,17 @@
 package be.pieterprovoost.wod.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SecondaryHeader {
 
-    private Integer code;
-    private Double value;
+    private List<SecondaryHeaderEntry> entries = new ArrayList<SecondaryHeaderEntry>();
 
-    public Integer getCode() {
-        return code;
+    public List<SecondaryHeaderEntry> getEntries() {
+        return entries;
     }
 
-    public void setCode(Integer code) {
-        this.code = code;
-    }
-
-    public Double getValue() {
-        return value;
-    }
-
-    public void setValue(Double value) {
-        this.value = value;
+    public void setEntries(List<SecondaryHeaderEntry> entries) {
+        this.entries = entries;
     }
 }

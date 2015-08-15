@@ -44,8 +44,24 @@ public class Parser {
      * @return secondary header
      */
     private SecondaryHeader parseSecondaryHeader() {
+
         SecondaryHeader secondaryHeader = new SecondaryHeader();
+
+        int f1 = readInt(1);
+        int f2 = readInt(f1);
+        int f3 = readInt(1);
+        Integer entryNumber = readInt(f3);
+
+        for (int e = 0; e < entryNumber; e++) {
+            SecondaryHeaderEntry entry = new SecondaryHeaderEntry();
+            int f5 = readInt(1);
+            entry.setCode(readInt(f5));
+            entry.setValue(readDouble());
+            secondaryHeader.getEntries().add(entry);
+        }
+
         return secondaryHeader;
+
     }
 
     /**
