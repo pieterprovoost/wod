@@ -1,14 +1,13 @@
 package be.pieterprovoost.wod;
 
-import be.pieterprovoost.wod.model.Cast;
-import be.pieterprovoost.wod.model.Metadata;
-import be.pieterprovoost.wod.model.PrimaryHeader;
-import be.pieterprovoost.wod.model.Variable;
+import be.pieterprovoost.wod.model.*;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Parser for ASCII records.
@@ -34,7 +33,83 @@ public class Parser {
     public Cast parse() {
         Cast cast = new Cast();
         cast.setPrimaryHeader(parsePrimaryHeader());
+        cast.setCharacterEntries(parseCharacterEntries());
+        cast.setSecondaryHeader(parseSecondaryHeader());
         return cast;
+    }
+
+    /**
+     * Parses the secondary header.
+     *
+     * @return secondary header
+     */
+    private SecondaryHeader parseSecondaryHeader() {
+        SecondaryHeader secondaryHeader = new SecondaryHeader();
+        return secondaryHeader;
+    }
+
+    /**
+     * Parses character entries.
+     *
+     * @return list of character entries
+     */
+    private List<CharacterEntry> parseCharacterEntries() {
+
+        List<CharacterEntry> entries = new ArrayList<CharacterEntry>();
+
+        int f1 = readInt(1);
+        int f2 = readInt(f1);
+        Integer entryNumber = readInt(1);
+
+        for (int e = 0; e < entryNumber; e++) {
+
+            CharacterEntry characterEntry = new CharacterEntry();
+
+            // data type
+
+            characterEntry.setDataType(readInt(1));
+
+            if (characterEntry.getDataType() == 1 || characterEntry.getDataType() == 2) {
+
+                // data
+
+                int f5 = readInt(1);
+                characterEntry.setData(readString(f5));
+
+            } else if (characterEntry.getDataType() == 3) {
+
+                int nameNumber = readInt(2);
+
+                for (int n = 0; n < nameNumber; n++) {
+
+                    PrincipalInvestigator principalInvestigator = new PrincipalInvestigator();
+
+                    // variable code
+
+                    int f6 = readInt(1);
+                    principalInvestigator.setVariableCode(readInt(f6));
+
+                    // investigator code
+
+                    int f8 = readInt(1);
+                    principalInvestigator.setInvestigatorCode(readInt(f8));
+
+                    // add investigator
+
+                    characterEntry.getPrincipalInvestigators().add(principalInvestigator);
+
+                }
+
+            }
+
+            // add entry
+
+            entries.add(characterEntry);
+
+        }
+
+        return entries;
+
     }
 
     /**
@@ -176,6 +251,9 @@ public class Parser {
         try {
             for (int i = 0; i < bytes; i++) {
                 result[i] = (char) reader.read();
+                if (result[i] == 10) {
+                    result[i] = (char) reader.read();
+                }
             }
         } catch (Exception e) {
         }
@@ -204,25 +282,6 @@ public class Parser {
     private String readString(int bytes) {
         char[] digits = readChar(bytes);
         return new String(digits);
-    }
-
-    /**
-     * Reads a byte array.
-     *
-     * @param bytes number of bytes to be read.
-     *
-     * @return byte array
-     */
-    private byte[] read(int bytes) {
-        byte[] result = new byte[bytes];
-        try {
-            for (int i = 0; i < bytes; i++) {
-                result[i] = (byte) reader.read();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return result;
     }
 
 }
