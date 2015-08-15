@@ -9,7 +9,17 @@ import java.util.List;
 public class Cast {
 
     private PrimaryHeader primaryHeader;
+
+    public BiologicalHeader getBiologicalHeader() {
+        return biologicalHeader;
+    }
+
+    public void setBiologicalHeader(BiologicalHeader biologicalHeader) {
+        this.biologicalHeader = biologicalHeader;
+    }
+
     private SecondaryHeader secondaryHeader;
+    private BiologicalHeader biologicalHeader;
 
     public SecondaryHeader getSecondaryHeader() {
         return secondaryHeader;

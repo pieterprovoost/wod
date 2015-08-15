@@ -35,6 +35,7 @@ public class Parser {
         cast.setPrimaryHeader(parsePrimaryHeader());
         cast.setCharacterEntries(parseCharacterEntries());
         cast.setSecondaryHeader(parseSecondaryHeader());
+        cast.setBiologicalHeader(parseBiologicalHeader());
         return cast;
     }
 
@@ -48,6 +49,11 @@ public class Parser {
         SecondaryHeader secondaryHeader = new SecondaryHeader();
 
         int f1 = readInt(1);
+
+        if (f1 == 0) {
+            return secondaryHeader;
+        }
+
         int f2 = readInt(f1);
         int f3 = readInt(1);
         Integer entryNumber = readInt(f3);
@@ -61,6 +67,37 @@ public class Parser {
         }
 
         return secondaryHeader;
+
+    }
+
+    /**
+     * Parses the biological header.
+     *
+     * @return biological header
+     */
+    private BiologicalHeader parseBiologicalHeader() {
+
+        BiologicalHeader biologicalHeader = new BiologicalHeader();
+
+        int f1 = readInt(1);
+
+        if (f1 == 0) {
+            return biologicalHeader;
+        }
+
+        int f2 = readInt(f1);
+        int f3 = readInt(1);
+        Integer entryNumber = readInt(f3);
+
+        for (int e = 0; e < entryNumber; e++) {
+            BiologicalHeaderEntry entry = new BiologicalHeaderEntry();
+            int f5 = readInt(1);
+            entry.setCode(readInt(f5));
+            entry.setValue(readDouble());
+            biologicalHeader.getEntries().add(entry);
+        }
+
+        return biologicalHeader;
 
     }
 
@@ -266,12 +303,15 @@ public class Parser {
         char[] result = new char[bytes];
         try {
             for (int i = 0; i < bytes; i++) {
-                result[i] = (char) reader.read();
-                if (result[i] == 10) {
-                    result[i] = (char) reader.read();
+                int n = 10;
+                while (n == 10) {
+                    n = reader.read();
                 }
+                result[i] = (char) n;
+                System.out.println("n: " + n + ", result: " + result[i]);
             }
         } catch (Exception e) {
+            e.printStackTrace();
         }
         return result;
     }
