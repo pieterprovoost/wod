@@ -1,11 +1,20 @@
 package be.pieterprovoost.wod.model;
 
-public class TaxaSetEntry {
+public class TaxaSetEntry implements Coded {
 
     private Integer code;
+    private String description;
     private Double value;
     private Integer qualityControl;
     private Integer originator;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     public Integer getCode() {
         return code;

@@ -1,4 +1,4 @@
-package be.pieterprovoost.wod;
+package be.pieterprovoost.wod.parser;
 
 import be.pieterprovoost.wod.model.Cast;
 import be.pieterprovoost.wod.serializer.JacksonCastSerializer;
@@ -14,6 +14,8 @@ public class ParserTest {
         InputStream inputStream = this.getClass().getResourceAsStream("67064");
         Parser parser = new Parser(inputStream);
         Cast cast = parser.parse();
+
+        Decoder.decode(cast);
 
         System.out.println(new JacksonCastSerializer().serialize(cast, true));
 

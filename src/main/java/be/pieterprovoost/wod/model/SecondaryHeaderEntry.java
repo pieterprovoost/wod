@@ -1,9 +1,18 @@
 package be.pieterprovoost.wod.model;
 
-public class SecondaryHeaderEntry {
+public class SecondaryHeaderEntry implements Coded {
 
     private Integer code;
+    private String description;
     private Double value;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     public Integer getCode() {
         return code;

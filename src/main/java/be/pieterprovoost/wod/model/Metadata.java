@@ -1,9 +1,18 @@
 package be.pieterprovoost.wod.model;
 
-public class Metadata {
+public class Metadata implements Coded {
 
     private Integer code;
+    private String description;
     private Double value;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     public Double getValue() {
         return value;

@@ -1,4 +1,4 @@
-package be.pieterprovoost.wod;
+package be.pieterprovoost.wod.parser;
 
 import be.pieterprovoost.wod.model.*;
 import org.apache.log4j.Logger;

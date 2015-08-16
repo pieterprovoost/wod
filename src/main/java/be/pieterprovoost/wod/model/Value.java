@@ -1,11 +1,20 @@
 package be.pieterprovoost.wod.model;
 
-public class Value {
+public class Value implements Coded {
 
     private Double value;
     private Integer qualityControl;
     private Integer originator;
     private Integer code;
+    private String description;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     public Integer getCode() {
         return code;
