@@ -38,7 +38,48 @@ public class Parser {
         parseSecondaryHeader(cast);
         parseBiologicalHeader(cast);
         parseTaxonData(cast);
+        parseProfileData(cast);
         return cast;
+    }
+
+    private void parseProfileData(Cast cast) {
+
+        logger.debug("Profile data");
+        ProfileData profileData = new ProfileData();
+
+        for (int l = 0; l < cast.getPrimaryHeader().getLevelNumber(); l++) {
+
+            logger.debug("Level");
+            Level level = new Level();
+
+            // depth
+
+            level.setDepth(readDouble());
+            level.setDepthErrorCode(readInt(1));
+            level.setOriginatorDepthErrorFlag(readInt(1));
+
+            // values
+
+            for (int v = 0; v < cast.getPrimaryHeader().getVariableNumber(); v++) {
+
+                logger.debug("Variable");
+                Value value = new Value();
+
+                value.setValue(readDouble());
+                value.setQualityControl(readInt(1));
+                value.setOriginator(readInt(1));
+                value.setCode(cast.getPrimaryHeader().getVariables().get(v).getCode());
+
+                level.getValues().add(value);
+
+            }
+
+            profileData.getLevels().add(level);
+
+        }
+
+        cast.setProfileData(profileData);
+
     }
 
     /**

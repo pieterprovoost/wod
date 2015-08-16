@@ -1,6 +1,7 @@
 package be.pieterprovoost.wod.model;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import sun.java2d.cmm.Profile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,15 @@ public class Cast {
     private String originatorsCruise;
     private String originatorsStationCode;
     private List<PrincipalInvestigator> principalInvestigators = new ArrayList<PrincipalInvestigator>();
+    private ProfileData profileData;
+
+    public ProfileData getProfileData() {
+        return profileData;
+    }
+
+    public void setProfileData(ProfileData profileData) {
+        this.profileData = profileData;
+    }
 
     public String getOriginatorsCruise() {
         return originatorsCruise;
