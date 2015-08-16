@@ -7,8 +7,6 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Parser for ASCII records.
@@ -35,20 +33,20 @@ public class Parser {
      */
     public Cast parse() {
         Cast cast = new Cast();
-        cast.setPrimaryHeader(parsePrimaryHeader());
-        cast.setCharacterEntries(parseCharacterEntries());
-        cast.setSecondaryHeader(parseSecondaryHeader());
-        cast.setBiologicalHeader(parseBiologicalHeader());
-        cast.setTaxonData(parseTaxonData());
+        parsePrimaryHeader(cast);
+        parseCharacterEntries(cast);
+        parseSecondaryHeader(cast);
+        parseBiologicalHeader(cast);
+        parseTaxonData(cast);
         return cast;
     }
 
     /**
-     * Parses the secondary header.
+     * Parses the secondary header
      *
-     * @return secondary header
+     * @param cast cast
      */
-    private SecondaryHeader parseSecondaryHeader() {
+    private void parseSecondaryHeader(Cast cast) {
 
         logger.debug("Secondary header");
         SecondaryHeader secondaryHeader = new SecondaryHeader();
@@ -56,7 +54,8 @@ public class Parser {
         int f1 = readInt(1);
 
         if (f1 == 0) {
-            return secondaryHeader;
+            cast.setSecondaryHeader(secondaryHeader);
+            return;
         }
 
         int f2 = readInt(f1);
@@ -73,16 +72,16 @@ public class Parser {
             secondaryHeader.getEntries().add(entry);
         }
 
-        return secondaryHeader;
+        cast.setSecondaryHeader(secondaryHeader);
 
     }
 
     /**
      * Parses the biological header.
      *
-     * @return biological header
+     * @param cast cast
      */
-    private BiologicalHeader parseBiologicalHeader() {
+    private void parseBiologicalHeader(Cast cast) {
 
         logger.debug("Biological header");
         BiologicalHeader biologicalHeader = new BiologicalHeader();
@@ -90,7 +89,8 @@ public class Parser {
         int f1 = readInt(1);
 
         if (f1 == 0) {
-            return biologicalHeader;
+            cast.setBiologicalHeader(biologicalHeader);
+            return;
         }
 
         int f2 = readInt(f1);
@@ -105,18 +105,24 @@ public class Parser {
             biologicalHeader.getEntries().add(entry);
         }
 
-        return biologicalHeader;
+        cast.setBiologicalHeader(biologicalHeader);
 
     }
 
-    private TaxonData parseTaxonData() {
+    /**
+     * Parses the taxon data.
+     *
+     * @param cast cast
+     */
+    private void parseTaxonData(Cast cast) {
 
         logger.debug("Taxon data");
         TaxonData taxonData = new TaxonData();
 
         int f1 = readInt(1);
         if (f1 == 0) {
-            return taxonData;
+            cast.setTaxonData(taxonData);
+            return;
         }
         int taxaSetNumber = readInt(f1);
 
@@ -145,24 +151,23 @@ public class Parser {
 
         }
 
+        cast.setTaxonData(taxonData);
 
-        return taxonData;
     }
 
     /**
      * Parses character entries.
      *
-     * @return list of character entries
+     * @param cast cast
      */
-    private List<CharacterEntry> parseCharacterEntries() {
+    private void parseCharacterEntries(Cast cast) {
 
         logger.debug("Character entries");
-        List<CharacterEntry> entries = new ArrayList<CharacterEntry>();
 
         int f1 = readInt(1);
 
         if (f1 == 0) {
-            return entries;
+            return;
         }
 
         int f2 = readInt(f1);
@@ -173,25 +178,25 @@ public class Parser {
 
         for (int e = 0; e < entryNumber; e++) {
 
-            CharacterEntry characterEntry = new CharacterEntry();
+            int dataType = readInt(1);
 
-            // data type
-
-            characterEntry.setDataType(readInt(1));
-
-            if (characterEntry.getDataType() == 1 || characterEntry.getDataType() == 2) {
-
-                // data
+            if (dataType == 1) {
 
                 int f5 = readInt(2);
-                characterEntry.setData(readString(f5));
+                cast.setOriginatorsCruise(readString(f5));
 
-            } else if (characterEntry.getDataType() == 3) {
+            } else if (dataType == 2) {
+
+                int f5 = readInt(2);
+                cast.setOriginatorsStationCode(readString(f5));
+
+            } else if (dataType == 3) {
 
                 int nameNumber = readInt(2);
 
                 for (int n = 0; n < nameNumber; n++) {
 
+                    logger.debug("Principal investigator");
                     PrincipalInvestigator principalInvestigator = new PrincipalInvestigator();
 
                     // variable code
@@ -206,28 +211,22 @@ public class Parser {
 
                     // add investigator
 
-                    characterEntry.getPrincipalInvestigators().add(principalInvestigator);
+                    cast.getPrincipalInvestigators().add(principalInvestigator);
 
                 }
 
             }
 
-            // add entry
-
-            entries.add(characterEntry);
-
         }
-
-        return entries;
 
     }
 
     /**
      * Parses the primary header.
      *
-     * @return primary header
+     * @param cast cast
      */
-    private PrimaryHeader parsePrimaryHeader() {
+    private void parsePrimaryHeader(Cast cast) {
 
         logger.debug("Primary header");
         PrimaryHeader primaryHeader = new PrimaryHeader();
@@ -336,7 +335,8 @@ public class Parser {
 
         }
 
-        return primaryHeader;
+        cast.setPrimaryHeader(primaryHeader);
+
     }
 
     /**
