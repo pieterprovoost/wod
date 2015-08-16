@@ -15,7 +15,7 @@ public class ParserTest {
         Parser parser = new Parser(inputStream);
         Cast cast = parser.parse();
 
-        Decoder.decode(cast);
+        new Decoder().decode(cast);
 
         System.out.println(new JacksonCastSerializer().serialize(cast, true));
 

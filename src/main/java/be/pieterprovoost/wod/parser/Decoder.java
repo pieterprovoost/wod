@@ -1,8 +1,12 @@
 package be.pieterprovoost.wod.parser;
 
 import be.pieterprovoost.wod.model.Coded;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.List;
 
@@ -10,7 +14,23 @@ public class Decoder {
 
     final static Logger logger = Logger.getLogger(Parser.class);
 
-    public static void decode(Object o) {
+    public Decoder() {
+
+        try {
+            InputStream inputStream = this.getClass().getResourceAsStream("code.json");
+            String json = IOUtils.toString(inputStream, "UTF-8");
+            Gson gson = new Gson();
+            JsonArray codes = gson.fromJson(json, JsonArray.class);
+
+            logger.info(codes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void decode(Object o) {
 
         if (Coded.class.isAssignableFrom(o.getClass())) {
             Coded coded = (Coded) o;
@@ -27,7 +47,7 @@ public class Decoder {
 
                 try {
                     field.setAccessible(true);
-                    Decoder.decode(field.get(o));
+                    decode(field.get(o));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -38,7 +58,7 @@ public class Decoder {
                     field.setAccessible(true);
                     Object child = field.get(o);
                     for (Object item : (List) child) {
-                        Decoder.decode(item);
+                        decode(item);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
