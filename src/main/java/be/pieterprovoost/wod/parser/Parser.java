@@ -1,46 +1,69 @@
 package be.pieterprovoost.wod.parser;
 
-import be.pieterprovoost.wod.model.*;
+import com.mongodb.*;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.UUID;
 
-/**
- * Parser for ASCII records.
- */
 public class Parser {
 
     final static Logger logger = Logger.getLogger(Parser.class);
 
     private Reader reader;
+    private MongoClient mongoClient;
+    private DB db;
+    private DBCollection collection;
 
     /**
      * Constructor.
      *
-     * @param inputStream ASCII record input stream
+     * @param inputStream inputstream
+     * @param host mongodb host
+     * @param db mongodb database
+     * @param collection mongodb collection
      */
-    public Parser(InputStream inputStream) {
+    public Parser(InputStream inputStream, String host, String db, String collection) {
         this.reader = new BufferedReader(new InputStreamReader(inputStream));
+        this.mongoClient = new MongoClient(host);
+        this.db = mongoClient.getDB(db);
+        this.collection = this.db.getCollection(collection);
     }
 
     /**
-     * Parses a stream.
+     * Constructor.
      *
-     * @return cast
+     * @param inputstream inputstream
      */
-    public Cast parse() {
-        Cast cast = new Cast();
-        parsePrimaryHeader(cast);
-        parseCharacterEntries(cast);
-        parseSecondaryHeader(cast);
-        parseBiologicalHeader(cast);
-        parseTaxonData(cast);
-        parseProfileData(cast);
-        return cast;
+    public Parser(InputStream inputstream) {
+        this(inputstream, "localhost", "wod", "wod");
     }
+
+    /**
+     * Drops the database collection.
+     */
+    public void drop() {
+        collection.drop();
+    }
+
+    /**
+     * Parses stream and saves to database.
+     */
+    public void parse() {
+        BasicDBObject cast = new BasicDBObject();
+
+        parsePrimaryHeader(cast);
+        //parseCharacterEntries();
+        //parseSecondaryHeader();
+        //parseBiologicalHeader();
+        //parseTaxonData();
+        //parseProfileData();
+    }
+
+    /*
 
     private void parseProfileData(Cast cast) {
 
@@ -82,11 +105,6 @@ public class Parser {
 
     }
 
-    /**
-     * Parses the secondary header
-     *
-     * @param cast cast
-     */
     private void parseSecondaryHeader(Cast cast) {
 
         logger.debug("Secondary header");
@@ -117,11 +135,6 @@ public class Parser {
 
     }
 
-    /**
-     * Parses the biological header.
-     *
-     * @param cast cast
-     */
     private void parseBiologicalHeader(Cast cast) {
 
         logger.debug("Biological header");
@@ -150,11 +163,6 @@ public class Parser {
 
     }
 
-    /**
-     * Parses the taxon data.
-     *
-     * @param cast cast
-     */
     private void parseTaxonData(Cast cast) {
 
         logger.debug("Taxon data");
@@ -196,11 +204,6 @@ public class Parser {
 
     }
 
-    /**
-     * Parses character entries.
-     *
-     * @param cast cast
-     */
     private void parseCharacterEntries(Cast cast) {
 
         logger.debug("Character entries");
@@ -262,121 +265,85 @@ public class Parser {
 
     }
 
+    */
+
     /**
-     * Parses the primary header.
+     * Parses the primary header
      *
-     * @param cast cast
+     * @param cast cast object
      */
-    private void parsePrimaryHeader(Cast cast) {
+    private void parsePrimaryHeader(BasicDBObject cast) {
 
         logger.debug("Primary header");
-        PrimaryHeader primaryHeader = new PrimaryHeader();
+        BasicDBObject primaryHeader = new BasicDBObject();
+        cast.put("primaryHeader", primaryHeader);
 
-        // version
-
-        primaryHeader.setVersionIdentifier(readString(1));
-
-        // bytes in profile
+        primaryHeader.put("versionIdentifier", readString(1));
 
         int f2 = readInt(1);
-        int profileBytes = readInt(f2);
-        logger.debug("Bytes in profile: " + profileBytes);
-
-        // cast number
+        int f3 = readInt(f2);
 
         int f4 = readInt(1);
-        primaryHeader.setCastNumber(readInt(f4));
+        primaryHeader.put("castNumber", readInt(f4));
 
-        // country code
-
-        primaryHeader.setCountryCode(readString(2));
-
-        // cruise number
+        primaryHeader.put("countryCode", readString(2));
 
         int f7 = readInt(1);
-        primaryHeader.setCruiseNumber(readInt(f7));
+        primaryHeader.put("cruiseNumber", readInt(f7));
 
-        // date
+        primaryHeader.put("year", readInt(4));
+        primaryHeader.put("month", readInt(2));
+        primaryHeader.put("day", readInt(2));
 
-        primaryHeader.setYear(readInt(4));
-        primaryHeader.setMonth(readInt(2));
-        primaryHeader.setDay(readInt(2));
+        primaryHeader.put("time", readDouble());
 
-        // time
-
-        primaryHeader.setTime(readDouble());
-
-        // coordinates
-
-        primaryHeader.setLatitude(readDouble());
-        primaryHeader.setLongitude(readDouble());
-
-        // number of levels
+        primaryHeader.put("latitude", readDouble());
+        primaryHeader.put("longitude", readDouble());
 
         int f15 = readInt(1);
-        primaryHeader.setLevelNumber(readInt(f15));
-        logger.debug("Number of levels: " + primaryHeader.getLevelNumber());
+        primaryHeader.put("levelNumber", readInt(f15));
+        logger.debug("Number of levels: " + primaryHeader.getInt("levelNumber"));
 
-        // profile type
+        primaryHeader.put("profileType", readInt(1));
 
-        primaryHeader.setProfileType(readInt(1));
-
-        // number of variables
-
-        primaryHeader.setVariableNumber(readInt(2));
-        logger.debug("Number of variables: " + primaryHeader.getVariableNumber());
+        primaryHeader.put("variableNumber", readInt(2));
+        logger.debug("Number of variables: " + primaryHeader.getInt("variableNumber"));
 
         // variables
 
-        for (int v = 0; v < primaryHeader.getVariableNumber(); v++) {
+        BasicDBList variables = new BasicDBList();
+        cast.put("variables", variables);
+
+        for (int v = 0; v < primaryHeader.getInt("variableNumber"); v++) {
 
             logger.debug("Variable");
-            Variable variable = new Variable();
-
-            // variable code
+            BasicDBObject variable = new BasicDBObject();
+            variables.add(variable);
 
             int f19 = readInt(1);
-            variable.setCode(readInt(f19));
+            variable.put(random(), "variable:" + readInt(f19));
 
-            // quality control flag
-
-            variable.setQualityControl(readInt(1));
-
-            // number of metadata
+            variable.put("qc", readInt(1));
 
             int f22 = readInt(1);
-            variable.setMetadataNumber(readInt(f22));
-            logger.debug("Number of metadata: " + variable.getMetadataNumber());
+            int metadataNumber = readInt(f22);
 
             // metadata
 
-            for (int m = 0; m < variable.getMetadataNumber(); m++) {
-
-                logger.debug("Metadata");
-                Metadata metadata = new Metadata();
-
-                // code
+            for (int m = 0; m < metadataNumber; m++) {
 
                 int f24 = readInt(1);
-                metadata.setCode(readInt(f24));
+                Integer code = readInt(f24);
+                Double value = readDouble();
 
-                // value
-
-                metadata.setValue(readDouble());
-
-                // add metadata
-
-                variable.getMetadatas().add(metadata);
+                String metadataCode = "metadata:" + code + ":" + value.intValue();
+                variable.put(random(), metadataCode);
 
             }
 
-            // add variable
-
-            primaryHeader.getVariables().add(variable);
-
         }
 
-        cast.setPrimaryHeader(primaryHeader);
+        collection.save(cast);
 
     }
 
@@ -443,6 +410,10 @@ public class Parser {
     private String readString(int bytes) {
         char[] digits = readChar(bytes);
         return new String(digits);
+    }
+
+    private String random() {
+        return "_code-" + UUID.randomUUID().toString();
     }
 
 }
