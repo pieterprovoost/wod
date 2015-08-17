@@ -2,17 +2,20 @@ package be.pieterprovoost.wod.parser;
 
 import be.pieterprovoost.wod.model.Coded;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
 
 public class Decoder {
 
     final static Logger logger = Logger.getLogger(Parser.class);
+    private JsonObject tables;
 
     public Decoder() {
 
@@ -20,23 +23,43 @@ public class Decoder {
             InputStream inputStream = this.getClass().getResourceAsStream("code.json");
             String json = IOUtils.toString(inputStream, "UTF-8");
             Gson gson = new Gson();
-            JsonArray codes = gson.fromJson(json, JsonArray.class);
-
-            logger.info(codes);
-
+            tables = gson.fromJson(json, JsonObject.class);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
+    private void setProperties(Object o) {
+
+        String table = o.getClass().getSimpleName();
+        String code = ((Coded) o).getCode().toString();
+
+        if (tables.has(table)) {
+            JsonObject t = tables.get(table).getAsJsonObject();
+            if (t.has(code)) {
+
+                JsonObject properties = t.get(code).getAsJsonObject();
+
+                for (Map.Entry<String, JsonElement> entry : properties.entrySet()) {
+                    try {
+                        Field field = o.getClass().getDeclaredField(entry.getKey());
+                        field.setAccessible(true);
+                        field.set(o, entry.getValue().getAsString());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        }
+    }
+
     public void decode(Object o) {
 
         if (Coded.class.isAssignableFrom(o.getClass())) {
             Coded coded = (Coded) o;
-
-            // to be implemented
-
+            setProperties(o);
         }
 
         Field[] fields = o.getClass().getDeclaredFields();
