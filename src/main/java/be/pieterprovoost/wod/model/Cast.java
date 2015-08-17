@@ -1,7 +1,6 @@
 package be.pieterprovoost.wod.model;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import sun.java2d.cmm.Profile;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,7 @@
 package be.pieterprovoost.wod.serializer;
 
 import be.pieterprovoost.wod.model.Cast;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JacksonCastSerializer implements CastSerializer {
@@ -9,6 +10,8 @@ public class JacksonCastSerializer implements CastSerializer {
 
         String result = "";
         ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
         try {
             if (pretty) {
