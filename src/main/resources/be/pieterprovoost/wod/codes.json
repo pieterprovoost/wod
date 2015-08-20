@@ -1,0 +1,21 @@
+[
+  { "code": "variable:1", "properties": { "description": "Temperature" } },
+  { "code": "variable:2", "properties": { "description": "Salinity" } },
+  { "code": "variable:3", "properties": { "description": "Oxygen" } },
+  { "code": "variable:4", "properties": { "description": "Phosphate" } },
+  { "code": "variable:6", "properties": { "description": "Silicate" } },
+  { "code": "variable:8", "properties": { "description": "Nitrate" } },
+  { "code": "variable:9", "properties": { "description": "pH" } },
+  { "code": "variable:11", "properties": { "description": "Chlorophyll" } },
+  { "code": "variable:17", "properties": { "description": "Alkalinity" } },
+  { "code": "variable:20", "properties": { "description": "pCO2" } },
+  { "code": "variable:21", "properties": { "description": "tCO2" } },
+  { "code": "variable:23", "properties": { "description": "Nitrate+Nitrite" } },
+  { "code": "variable:25", "properties": { "description": "Pressure" } },
+  { "code": "variable:27", "properties": { "description": "CO2 warming (SUR)" } },
+  { "code": "variable:28", "properties": { "description": "xCO2 atmosphere (SUR)" } },
+  { "code": "variable:29", "properties": { "description": "Air Pressure (SUR)" } },
+  { "code": "variable:30", "properties": { "description": "Latitude (APB,UOR,SUR)" } },
+  { "code": "variable:31", "properties": { "description": "Longitude (APB,UOR,SUR)" } },
+  { "code": "variable:32", "properties": { "description": "Julian Day (APB,UOR,SUR)" } }
+]

@@ -1,6 +1,5 @@
 package be.pieterprovoost.wod;
 
-import be.pieterprovoost.wod.Parser;
 import com.mongodb.BasicDBObject;
 import org.junit.Test;
 
