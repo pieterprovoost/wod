@@ -1,5 +1,7 @@
-package be.pieterprovoost.wod.parser;
+package be.pieterprovoost.wod;
 
+import be.pieterprovoost.wod.Parser;
+import com.mongodb.BasicDBObject;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -11,8 +13,11 @@ public class ParserTest {
 
         InputStream inputStream = this.getClass().getResourceAsStream("67064");
         Parser parser = new Parser(inputStream);
-        parser.drop();
-        parser.parse();
+        BasicDBObject cast = parser.parse();
+
+        Repository repository = new Repository();
+        repository.drop();
+        repository.save(cast);
 
     }
 

@@ -1,4 +1,4 @@
-package be.pieterprovoost.wod.parser;
+package be.pieterprovoost.wod;
 
 import com.mongodb.*;
 import org.apache.log4j.Logger;
@@ -7,52 +7,26 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.UUID;
 
 public class Parser {
 
     final static Logger logger = Logger.getLogger(Parser.class);
 
     private Reader reader;
-    private MongoClient mongoClient;
-    private DB db;
-    private DBCollection collection;
 
     /**
      * Constructor.
      *
      * @param inputStream inputstream
-     * @param host mongodb host
-     * @param db mongodb database
-     * @param collection mongodb collection
      */
-    public Parser(InputStream inputStream, String host, String db, String collection) {
+    public Parser(InputStream inputStream) {
         this.reader = new BufferedReader(new InputStreamReader(inputStream));
-        this.mongoClient = new MongoClient(host);
-        this.db = mongoClient.getDB(db);
-        this.collection = this.db.getCollection(collection);
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param inputstream inputstream
-     */
-    public Parser(InputStream inputstream) {
-        this(inputstream, "localhost", "wod", "wod");
-    }
-
-    /**
-     * Drops the database collection.
-     */
-    public void drop() {
-        collection.drop();
     }
 
     /**
      * Parses stream and saves to database.
      */
-    public void parse() {
+    public BasicDBObject parse() {
         BasicDBObject cast = new BasicDBObject();
 
         parsePrimaryHeader(cast);
@@ -61,6 +35,8 @@ public class Parser {
         //parseBiologicalHeader();
         //parseTaxonData();
         //parseProfileData();
+
+        return cast;
     }
 
     /*
@@ -321,7 +297,7 @@ public class Parser {
             variables.add(variable);
 
             int f19 = readInt(1);
-            variable.put(random(), "variable:" + readInt(f19));
+            addCode(variable, "variable:" + readInt(f19));
 
             variable.put("qc", readInt(1));
 
@@ -336,15 +312,20 @@ public class Parser {
                 Integer code = readInt(f24);
                 Double value = readDouble();
 
-                String metadataCode = "metadata:" + code + ":" + value.intValue();
-                variable.put(random(), metadataCode);
+                addCode(variable, "metadata:" + code + ":" + value.intValue());
 
             }
 
         }
 
-        collection.save(cast);
+    }
 
+    private void addCode(BasicDBObject o, String code) {
+        if (!o.containsField("_codes")) {
+            o.put("_codes", new BasicDBList());
+        }
+        BasicDBList codes = (BasicDBList) o.get("_codes");
+        codes.add(code);
     }
 
     /**
@@ -410,10 +391,6 @@ public class Parser {
     private String readString(int bytes) {
         char[] digits = readChar(bytes);
         return new String(digits);
-    }
-
-    private String random() {
-        return "_code-" + UUID.randomUUID().toString();
     }
 
 }
