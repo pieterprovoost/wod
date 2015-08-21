@@ -1,6 +1,8 @@
 package be.pieterprovoost.wod;
 
 import com.mongodb.*;
+import com.mongodb.util.JSON;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
@@ -13,6 +15,7 @@ public class Parser {
     final static Logger logger = Logger.getLogger(Parser.class);
 
     private Reader reader;
+    private BasicDBObject codes;
 
     /**
      * Constructor.
@@ -20,11 +23,12 @@ public class Parser {
      * @param inputStream inputstream
      */
     public Parser(InputStream inputStream) {
+        loadTables();
         this.reader = new BufferedReader(new InputStreamReader(inputStream));
     }
 
     /**
-     * Parses stream and saves to database.
+     * Parses the input stream to a BasicDBObject.
      */
     public BasicDBObject parse() {
         BasicDBObject cast = new BasicDBObject();
@@ -37,6 +41,33 @@ public class Parser {
         //parseProfileData();
 
         return cast;
+    }
+
+    /**
+     * Loads the code tables from a json file.
+     */
+    private void loadTables() {
+        InputStream is = this.getClass().getResourceAsStream("codes.json");
+        try {
+            String json = IOUtils.toString(is);
+            codes = (BasicDBObject) JSON.parse(json);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Looks up a code in the tables and adds the necessary properties to the associated BasicDBObject.
+     *
+     * @param o the BasicDBObject
+     * @param code the code
+     */
+    private void lookupTable(BasicDBObject o, String code) {
+        if (codes.containsField(code)) {
+            BasicDBObject entry = (BasicDBObject) codes.get(code);
+            DBObject properties = (DBObject) entry.get("properties");
+            o.putAll(properties);
+        }
     }
 
     /*
@@ -297,7 +328,7 @@ public class Parser {
             variables.add(variable);
 
             int f19 = readInt(1);
-            addCode(variable, "variable:" + readInt(f19));
+            lookupTable(variable, "variable:" + readInt(f19));
 
             variable.put("qc", readInt(1));
 
@@ -312,20 +343,12 @@ public class Parser {
                 Integer code = readInt(f24);
                 Double value = readDouble();
 
-                addCode(variable, "metadata:" + code + ":" + value.intValue());
+                lookupTable(variable, "metadata:" + code + ":" + value.intValue());
 
             }
 
         }
 
-    }
-
-    private void addCode(BasicDBObject o, String code) {
-        if (!o.containsField("_codes")) {
-            o.put("_codes", new BasicDBList());
-        }
-        BasicDBList codes = (BasicDBList) o.get("_codes");
-        codes.add(code);
     }
 
     /**
