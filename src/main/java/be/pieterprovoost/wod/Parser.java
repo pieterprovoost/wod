@@ -15,7 +15,7 @@ public class Parser {
     final static Logger logger = Logger.getLogger(Parser.class);
 
     private Reader reader;
-    private BasicDBObject codes;
+    private BasicDBObject tables;
 
     /**
      * Constructor.
@@ -50,7 +50,7 @@ public class Parser {
         InputStream is = this.getClass().getResourceAsStream("codes.json");
         try {
             String json = IOUtils.toString(is);
-            codes = (BasicDBObject) JSON.parse(json);
+            tables = (BasicDBObject) JSON.parse(json);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -60,12 +60,21 @@ public class Parser {
      * Looks up a code in the tables and adds the necessary properties to the associated BasicDBObject.
      *
      * @param o the BasicDBObject
-     * @param code the code
+     * @param codes code sequence
      */
-    private void lookupTable(BasicDBObject o, String code) {
-        if (codes.containsField(code)) {
-            BasicDBObject entry = (BasicDBObject) codes.get(code);
-            DBObject properties = (DBObject) entry.get("properties");
+    private void lookupTable(BasicDBObject o, String... codes) {
+        BasicDBObject node = tables;
+
+        for (String code : codes) {
+            if (node.containsField(code)) {
+                node = (BasicDBObject) node.get(code);
+            } else {
+                return;
+            }
+        }
+
+        if (node.containsField("properties")) {
+            DBObject properties = (DBObject) node.get("properties");
             o.putAll(properties);
         }
     }
@@ -328,7 +337,7 @@ public class Parser {
             variables.add(variable);
 
             int f19 = readInt(1);
-            lookupTable(variable, "variable:" + readInt(f19));
+            lookupTable(variable, "variable", Integer.toString(readInt(f19)));
 
             variable.put("qc", readInt(1));
 
@@ -343,7 +352,7 @@ public class Parser {
                 Integer code = readInt(f24);
                 Double value = readDouble();
 
-                lookupTable(variable, "metadata:" + code + ":" + value.intValue());
+                lookupTable(variable, "metadata", code.toString(), Integer.toString(value.intValue()));
 
             }
 
