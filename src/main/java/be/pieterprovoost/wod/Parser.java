@@ -2,6 +2,7 @@ package be.pieterprovoost.wod;
 
 import com.mongodb.*;
 import com.mongodb.util.JSON;
+import com.sun.deploy.util.StringUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
@@ -9,6 +10,8 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Parser {
 
@@ -34,7 +37,7 @@ public class Parser {
         BasicDBObject cast = new BasicDBObject();
 
         parsePrimaryHeader(cast);
-        //parseCharacterEntries();
+        parseCharacterEntries(cast);
         //parseSecondaryHeader();
         //parseBiologicalHeader();
         //parseTaxonData();
@@ -69,6 +72,7 @@ public class Parser {
             if (node.containsField(code)) {
                 node = (BasicDBObject) node.get(code);
             } else {
+                logger.warn("Table lookup failed for: " + StringUtils.join(Arrays.asList(codes), " "));
                 return;
             }
         }
@@ -220,21 +224,20 @@ public class Parser {
 
     }
 
-    private void parseCharacterEntries(Cast cast) {
+    */
+
+    private void parseCharacterEntries(BasicDBObject cast) {
 
         logger.debug("Character entries");
+        BasicDBObject characterData = new BasicDBObject();
+        cast.put("characterData", characterData);
 
         int f1 = readInt(1);
-
         if (f1 == 0) {
             return;
         }
-
         int f2 = readInt(f1);
-        logger.debug("Total bytes character data: " + f2);
-
         Integer entryNumber = readInt(1);
-        logger.debug("Character data entries: " + entryNumber);
 
         for (int e = 0; e < entryNumber; e++) {
 
@@ -243,35 +246,39 @@ public class Parser {
             if (dataType == 1) {
 
                 int f5 = readInt(2);
-                cast.setOriginatorsCruise(readString(f5));
+                characterData.put("originatorsCruise", readString(f5));
 
             } else if (dataType == 2) {
 
                 int f5 = readInt(2);
-                cast.setOriginatorsStationCode(readString(f5));
+                characterData.put("originatorsStationCode", readString(f5));
 
             } else if (dataType == 3) {
 
                 int nameNumber = readInt(2);
+                if (nameNumber > 0) {
 
-                for (int n = 0; n < nameNumber; n++) {
+                    BasicDBList principalInvestigrators = new BasicDBList();
+                    characterData.put("principalInvestigators", principalInvestigrators);
 
-                    logger.debug("Principal investigator");
-                    PrincipalInvestigator principalInvestigator = new PrincipalInvestigator();
+                    for (int n = 0; n < nameNumber; n++) {
 
-                    // variable code
+                        BasicDBObject principalInvestigator = new BasicDBObject();
+                        principalInvestigrators.add(principalInvestigator);
 
-                    int f6 = readInt(1);
-                    principalInvestigator.setVariableCode(readInt(f6));
+                        // variable code
 
-                    // investigator code
+                        int f6 = readInt(1);
+                        BasicDBObject variable = new BasicDBObject();
+                        lookupTable(variable, "variable", Integer.toString(readInt(f6)));
+                        principalInvestigator.put("variable", variable);
 
-                    int f8 = readInt(1);
-                    principalInvestigator.setInvestigatorCode(readInt(f8));
+                        // investigator code
 
-                    // add investigator
+                        int f8 = readInt(1);
+                        lookupTable(principalInvestigator, "investigator", Integer.toString(readInt(f8)));
 
-                    cast.getPrincipalInvestigators().add(principalInvestigator);
+                    }
 
                 }
 
@@ -280,8 +287,6 @@ public class Parser {
         }
 
     }
-
-    */
 
     /**
      * Parses the primary header
@@ -339,20 +344,26 @@ public class Parser {
             int f19 = readInt(1);
             lookupTable(variable, "variable", Integer.toString(readInt(f19)));
 
-            variable.put("qc", readInt(1));
+            lookupTable(variable, "qc", "cast", Integer.toString(readInt(1)));
 
             int f22 = readInt(1);
             int metadataNumber = readInt(f22);
 
             // metadata
 
-            for (int m = 0; m < metadataNumber; m++) {
+            if (metadataNumber > 0) {
 
-                int f24 = readInt(1);
-                Integer code = readInt(f24);
-                Double value = readDouble();
+                BasicDBList metadata = new BasicDBList();
 
-                lookupTable(variable, "metadata", code.toString(), Integer.toString(value.intValue()));
+                for (int m = 0; m < metadataNumber; m++) {
+
+                    int f24 = readInt(1);
+                    Integer code = readInt(f24);
+                    Double value = readDouble();
+
+                    lookupTable(variable, "metadata", code.toString(), Integer.toString(value.intValue()));
+
+                }
 
             }
 
@@ -397,7 +408,7 @@ public class Parser {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        logger.debug("  Bytes read: " + new String(result));
+        logger.trace("  Bytes read: " + new String(result));
         return result;
     }
 
